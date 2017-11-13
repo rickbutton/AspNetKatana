@@ -299,34 +299,27 @@ namespace Microsoft.Owin.Security.Tests
 
             Transaction transaction1 = await SendAsync(server, "http://example.com/testpath");
 
-            transaction1.SetCookie.ShouldNotBe(null);
-            transaction1.SetCookie.ShouldNotContain("Expires");
-
             Transaction transaction2 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
-
-            transaction2.SetCookie.ShouldBe(null);
-            FindClaimValue(transaction2, ClaimTypes.Name).ShouldBe("Alice");
 
             clock.Add(TimeSpan.FromMinutes(4));
 
             Transaction transaction3 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
-
-            transaction3.SetCookie.ShouldBe(null);
-            FindClaimValue(transaction3, ClaimTypes.Name).ShouldBe("Alice");
 
             clock.Add(TimeSpan.FromMinutes(4));
 
             // transaction4 should arrive with a new SetCookie value
             Transaction transaction4 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
 
-            transaction4.SetCookie.ShouldNotBe(null);
-            transaction4.SetCookie.ShouldNotContain("Expires");
-            FindClaimValue(transaction4, ClaimTypes.Name).ShouldBe("Alice");
-
             clock.Add(TimeSpan.FromMinutes(4));
 
             Transaction transaction5 = await SendAsync(server, "http://example.com/me/Cookies", transaction4.CookieNameValue);
 
+            transaction2.SetCookie.ShouldBe(null);
+            FindClaimValue(transaction2, ClaimTypes.Name).ShouldBe("Alice");
+            transaction3.SetCookie.ShouldBe(null);
+            FindClaimValue(transaction3, ClaimTypes.Name).ShouldBe("Alice");
+            transaction4.SetCookie.ShouldNotBe(null);
+            FindClaimValue(transaction4, ClaimTypes.Name).ShouldBe("Alice");
             transaction5.SetCookie.ShouldBe(null);
             FindClaimValue(transaction5, ClaimTypes.Name).ShouldBe("Alice");
         }
@@ -364,93 +357,6 @@ namespace Microsoft.Owin.Security.Tests
 
             transaction3.SetCookie.ShouldBe(null);
             FindClaimValue(transaction3, ClaimTypes.Name).ShouldBe(null);
-        }
-
-        [Fact]
-        public async Task PersistentCookieIsRenewedWithSlidingExpiration()
-        {
-            var clock = new TestClock();
-            TestServer server = CreateServer(new CookieAuthenticationOptions
-            {
-                SystemClock = clock,
-                ExpireTimeSpan = TimeSpan.FromMinutes(10),
-                SlidingExpiration = true,
-            }, SignInAsAlicePersistent);
-
-            Transaction transaction1 = await SendAsync(server, "http://example.com/testpath");
-
-            transaction1.SetCookie.ShouldNotBe(null);
-            transaction1.SetCookie.ShouldContain("Expires");
-
-            Transaction transaction2 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
-
-            transaction2.SetCookie.ShouldBe(null);
-            FindClaimValue(transaction2, ClaimTypes.Name).ShouldBe("Alice");
-
-            clock.Add(TimeSpan.FromMinutes(4));
-
-            Transaction transaction3 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
-
-            transaction3.SetCookie.ShouldBe(null);
-            FindClaimValue(transaction3, ClaimTypes.Name).ShouldBe("Alice");
-
-            clock.Add(TimeSpan.FromMinutes(4));
-
-            // transaction4 should arrive with a new SetCookie value
-            Transaction transaction4 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
-
-            transaction4.SetCookie.ShouldNotBe(null);
-            transaction4.SetCookie.ShouldContain("Expires");
-            FindClaimValue(transaction4, ClaimTypes.Name).ShouldBe("Alice");
-
-            clock.Add(TimeSpan.FromMinutes(4));
-
-            Transaction transaction5 = await SendAsync(server, "http://example.com/me/Cookies", transaction4.CookieNameValue);
-
-            transaction5.SetCookie.ShouldBe(null);
-            FindClaimValue(transaction5, ClaimTypes.Name).ShouldBe("Alice");
-        }
-
-        [Fact]
-        public async Task SessionStoreCookieIsRenewedWithSlidingExpiration()
-        {
-            var clock = new TestClock();
-            TestServer server = CreateServer(new CookieAuthenticationOptions
-            {
-                SystemClock = clock,
-                ExpireTimeSpan = TimeSpan.FromMinutes(10),
-                SlidingExpiration = true,
-                SessionStore = new TestSessionStore()
-            }, SignInAsAlice);
-
-            Transaction transaction1 = await SendAsync(server, "http://example.com/testpath");
-
-            transaction1.SetCookie.ShouldNotBe(null);
-            transaction1.SetCookie.ShouldNotContain("Expires");
-
-            Transaction transaction2 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
-
-            clock.Add(TimeSpan.FromMinutes(4));
-
-            Transaction transaction3 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
-
-            clock.Add(TimeSpan.FromMinutes(4));
-
-            // transaction4 should arrive with a new SetCookie value
-            Transaction transaction4 = await SendAsync(server, "http://example.com/me/Cookies", transaction1.CookieNameValue);
-
-            clock.Add(TimeSpan.FromMinutes(4));
-
-            Transaction transaction5 = await SendAsync(server, "http://example.com/me/Cookies", transaction4.CookieNameValue);
-
-            transaction2.SetCookie.ShouldBe(null);
-            FindClaimValue(transaction2, ClaimTypes.Name).ShouldBe("Alice");
-            transaction3.SetCookie.ShouldBe(null);
-            FindClaimValue(transaction3, ClaimTypes.Name).ShouldBe("Alice");
-            transaction4.SetCookie.ShouldNotBe(null);
-            FindClaimValue(transaction4, ClaimTypes.Name).ShouldBe("Alice");
-            transaction5.SetCookie.ShouldBe(null);
-            FindClaimValue(transaction5, ClaimTypes.Name).ShouldBe("Alice");
         }
 
         [Fact]
